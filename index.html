@@ -2702,6 +2702,9 @@ var CONFIG = {
   targetEmail: 'scihsdept@mans.edu.eg'
 };
 
+/* ---- Official document links (hosted on Google Drive) ---- */
+var KINSHIP_FORM_URL = 'https://docs.google.com/document/d/1U3kNrcJ-iftpI-ZrlzEUfcxC1zBx4yIq/view';
+var COMMITTEE_FORM_URL = 'https://docs.google.com/document/d/1tG2uFgDyc7UxadsTrl4resJtl_XjACRV/view';
 /* ---- Icons ---- */
 var ICONS = {
   master: '<path d="M18 6L32 12 18 18 4 12z"/><path d="M9 14.5V21c0 2 4 4 9 4s9-2 9-4v-6.5" /><path d="M32 12v7" stroke-linecap="round"/><circle cx="32" cy="21" r="1.5" fill="currentColor" stroke="none"/>',
@@ -2751,13 +2754,9 @@ function supervisorFields(n, required){
 function committeeFormDef(isDoctorate){
   var links = isDoctorate ? {
     jury: 'https://tinyurl.com/j3km6e7k',
-    kinship: 'https://tinyurl.com/47jcftuc',
-    juryCount: 'https://tinyurl.com/fu3xuehc',
     validity: 'https://tinyurl.com/4zr3xkz3'
   } : {
     jury: 'https://bit.ly/3UtGYXN',
-    kinship: 'https://bit.ly/4i4dGsE',
-    juryCount: 'https://tinyurl.com/dtpwsrpj',
     validity: 'https://tinyurl.com/4zr3xkz3'
   };
   return {
@@ -2776,8 +2775,8 @@ function committeeFormDef(isDoctorate){
     ],
     downloadLinks: [
       { label:'نموذج لجنة الحكم والمناقشة', href: links.jury },
-      { label:'نموذج درجة القرابة', href: links.kinship },
-      { label:'نموذج عدد مرات التحكيم', href: links.juryCount },
+      { label:'نموذج درجة القرابة', href: KINSHIP_FORM_URL },
+      { label:'نموذج عدد مرات التحكيم', href: COMMITTEE_FORM_URL },
       { label:'نموذج تقرير الصلاحية', href: links.validity }
     ],
     contact: { name:'c_student_name', phone:'c_phone', email:'c_email' }
@@ -2788,12 +2787,10 @@ function registrationFormDef(isDoctorate){
   var degreeLabel = isDoctorate ? 'الدكتوراه' : 'الماجستير';
   var regLinks = isDoctorate ? {
     protocol: 'https://tinyurl.com/56hdj5h5',
-    plan: 'https://tinyurl.com/2s4yutxf',
-    kinship: 'https://tinyurl.com/3rzfrxen'
+    plan: 'https://tinyurl.com/2s4yutxf'
   } : {
     protocol: 'https://tinyurl.com/3k2pn9ev',
-    plan: 'https://tinyurl.com/y62fn7mx',
-    kinship: 'https://tinyurl.com/2rsvek9s'
+    plan: 'https://tinyurl.com/y62fn7mx'
   };
   var qualFields = [
     { key:'q_bsc_name',  label:'اسم المؤهل (بكالوريوس)', type:'text', required:true },
@@ -2849,7 +2846,7 @@ function registrationFormDef(isDoctorate){
     downloadLinks: [
       { label:'ملف البروتوكول', href: regLinks.protocol },
       { label:'الخطة الزمنية / الدراسية', href: regLinks.plan },
-      { label:'درجة قرابة الإشراف', href: regLinks.kinship }
+      { label:'درجة قرابة الإشراف', href: KINSHIP_FORM_URL }
     ],
     contact: { name:'r_name', phone:'r_phone', email:'r_email' }
   };
@@ -2953,7 +2950,12 @@ function renderSections(sections){
 function renderDownloadLinks(links){
   if (!links || !links.length) return '';
   return '<div class="download-links">' + links.map(function(l){
-    return '<a class="btn-ghost" href="'+l.href+'" target="_blank" rel="noopener noreferrer">تحميل '+l.label+'</a>';
+    // Embedded attachments (data: URIs) use a real download attribute and
+    // no target/rel; external links keep opening in a new tab as before.
+    var attrs = l.download
+      ? ' download="'+escapeHtml(l.download)+'"'
+      : ' target="_blank" rel="noopener noreferrer"';
+    return '<a class="btn-ghost" href="'+l.href+'"'+attrs+'>تحميل '+l.label+'</a>';
   }).join('') + '</div>';
 }
 
