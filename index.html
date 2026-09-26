@@ -2699,7 +2699,8 @@ var qrcode = function() {
 
 /* ---- Configuration ---- */
 var CONFIG = {
-  targetEmail: 'scihsdept@mans.edu.eg'
+  targetEmail: 'scihsdept@mans.edu.eg',
+  sheetsWebAppUrl: 'https://script.google.com/macros/s/AKfycbwqdPUWXDSGFxoB1-U911NjvrP57gjQ3QsxUeLHtZqgmqryn3cOo-BX-klhj2zeipYHAg/exec'
 };
 
 /* ---- Official document links (hosted on Google Drive) ---- */
@@ -2786,10 +2787,8 @@ function committeeFormDef(isDoctorate){
 function registrationFormDef(isDoctorate){
   var degreeLabel = isDoctorate ? 'الدكتوراه' : 'الماجستير';
   var regLinks = isDoctorate ? {
-    protocol: 'https://tinyurl.com/56hdj5h5',
     plan: 'https://tinyurl.com/2s4yutxf'
   } : {
-    protocol: 'https://tinyurl.com/3k2pn9ev',
     plan: 'https://tinyurl.com/y62fn7mx'
   };
   var qualFields = [
@@ -2844,7 +2843,6 @@ function registrationFormDef(isDoctorate){
       { title:'لجنة الإشراف (بناءً على تعليمات المشرف الرئيسي)', fields: supervisors }
     ],
     downloadLinks: [
-      { label:'ملف البروتوكول', href: regLinks.protocol },
       { label:'الخطة الزمنية / الدراسية', href: regLinks.plan },
       { label:'درجة قرابة الإشراف', href: KINSHIP_FORM_URL }
     ],
@@ -3104,6 +3102,20 @@ function showView(name){
 /* ---- Submit / confirm ---- */
 var lastSubmission = null;
 
+// Silently appends the submission to the program's Google Sheet via the
+// Apps Script web app. Best-effort: never blocks the UI, and failures
+// (e.g. this page running inside Claude's sandboxed frame, which blocks
+// fetch to external hosts) are swallowed since mailto stays as backup.
+function submitToSheet(program, rows){
+  if (!CONFIG.sheetsWebAppUrl) return;
+  try {
+    var body = new URLSearchParams();
+    body.set('program', program);
+    body.set('fields', JSON.stringify(rows));
+    fetch(CONFIG.sheetsWebAppUrl, { method:'POST', mode:'no-cors', body: body }).catch(function(){});
+  } catch (err) { /* ignore */ }
+}
+
 function handleSubmit(heading, def){
   var fields = allFieldsOf(def.sections);
   var values = collectValues(fields);
@@ -3136,6 +3148,7 @@ function handleSubmit(heading, def){
     contactEmail: def.contact ? values[def.contact.email] : ''
   };
 
+  submitToSheet(program.label, rows);
   renderReceipt(rows);
   showView('confirm');
 }
