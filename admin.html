@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة المشرف - الدراسات العليا</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0e1a16; --ink-2:#152620;
+    --parchment:#f6f1e2; --parchment-2:#efe6cf;
+    --gold:#ad8a3d; --gold-bright:#d9b768;
+    --emerald:#123c31; --emerald-2:#1a5142;
+    --text-muted:#5b5138; --danger:#8c3a2b; --safe:#2a6b3f;
+  }
+  *{box-sizing:border-box;}
+  html{background:var(--ink);}
+  body{
+    margin:0; min-height:100vh; font-family:'Tajawal', sans-serif;
+    background:var(--ink);
+    background-image:
+      radial-gradient(1200px 700px at 50% -10%, var(--ink-2), transparent 60%);
+    color:var(--parchment);
+    padding:40px 16px;
+  }
+  .stage{ max-width:720px; margin:0 auto; }
+  .frame{
+    position:relative;
+    border:1px solid var(--gold);
+    border-radius:10px;
+    background:linear-gradient(180deg, var(--parchment), var(--parchment-2));
+    padding:34px 30px;
+    box-shadow:0 30px 60px -30px rgba(0,0,0,.6);
+  }
+  h1,h2,h3{ font-family:'Amiri', Georgia, serif; margin:0; color:var(--emerald); }
+  .login-box{ max-width:360px; margin:30px auto; text-align:center; }
+  .login-box h2{ font-size:1.3rem; margin-bottom:6px; }
+  .login-box p{ color:var(--text-muted); font-size:.9rem; margin-bottom:22px; }
+  input[type=password]{
+    width:100%; padding:12px 14px; border:1px solid var(--gold); border-radius:8px;
+    font:inherit; font-size:1rem; background:#fffdf7; color:var(--ink); text-align:center;
+    letter-spacing:.1em;
+  }
+  input[type=password]:focus{ outline:2px solid var(--emerald-2); outline-offset:1px; }
+  .btn-gold{
+    margin-top:14px; width:100%; padding:12px 16px; border:1px solid var(--gold);
+    border-radius:8px; cursor:pointer; font:inherit; font-weight:800; font-size:.95rem;
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold)); color:#241a06;
+  }
+  .btn-gold:hover{ filter:brightness(1.05); }
+  .err{ color:var(--danger); font-size:.85rem; min-height:1.2em; margin-top:10px; }
+
+  .dash{ display:none; }
+  .dash.show{ display:block; }
+  .welcome{ text-align:center; padding-bottom:18px; border-bottom:1px solid var(--gold); margin-bottom:22px; }
+  .welcome .role{ color:var(--gold); font-size:.85rem; font-weight:700; }
+  .welcome h2{ font-size:1.4rem; margin:4px 0; }
+  .welcome .sub{ color:var(--text-muted); font-size:.88rem; }
+  .logout{ background:none; border:none; color:var(--text-muted); text-decoration:underline; font:inherit; cursor:pointer; font-size:.82rem; display:block; margin:10px auto 0; }
+
+  .lock-card{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    background:#fffdf7; border:1px solid var(--gold); border-radius:10px;
+    padding:18px 20px; margin-bottom:26px; flex-wrap:wrap;
+  }
+  .lock-status{ font-weight:800; font-size:1.05rem; }
+  .lock-status.open{ color:var(--safe); }
+  .lock-status.closed{ color:var(--danger); }
+  .lock-sub{ color:var(--text-muted); font-size:.82rem; margin-top:4px; }
+  .btn-toggle{
+    padding:12px 22px; border-radius:999px; border:1px solid; cursor:pointer;
+    font:inherit; font-weight:800; font-size:.92rem; white-space:nowrap;
+  }
+  .btn-toggle.to-close{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  .btn-toggle.to-open{ background:var(--safe); border-color:var(--safe); color:#fff; }
+  .btn-toggle:disabled{ opacity:.6; cursor:wait; }
+
+  .section-title{ font-size:1.1rem; margin:30px 0 14px; display:flex; align-items:center; gap:8px; }
+  .section-title .l{ flex:1; height:1px; background:linear-gradient(90deg, var(--gold), transparent); }
+
+  .stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; }
+  .stat-card{
+    background:#fffdf7; border:1px solid var(--gold); border-radius:10px;
+    padding:16px; text-align:center;
+  }
+  .stat-card .num{ font-family:'Amiri', serif; font-size:1.8rem; font-weight:700; color:var(--emerald); }
+  .stat-card .lbl{ font-size:.78rem; color:var(--text-muted); margin-top:4px; }
+
+  table.breakdown{ width:100%; border-collapse:collapse; margin-top:14px; font-size:.88rem; }
+  table.breakdown th, table.breakdown td{ padding:10px; border-bottom:1px solid var(--parchment-2); text-align:center; }
+  table.breakdown th{ color:var(--gold); font-weight:700; }
+  table.breakdown td:first-child, table.breakdown th:first-child{ text-align:right; }
+
+  .refresh-note{ text-align:center; color:var(--text-muted); font-size:.78rem; margin-top:14px; }
+  .muted-link{ color:var(--emerald); }
+  .loading{ text-align:center; color:var(--text-muted); padding:20px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="frame">
+
+    <div id="loginView">
+      <div class="login-box">
+        <h2>لوحة المشرف</h2>
+        <p>إدارة الدراسات العليا — كلية العلوم، جامعة المنصورة</p>
+        <input type="password" id="pwInput" placeholder="كلمة المرور" autocomplete="off">
+        <button class="btn-gold" id="loginBtn" type="button">دخول</button>
+        <div class="err" id="loginErr"></div>
+      </div>
+    </div>
+
+    <div id="dashView" class="dash">
+      <div class="welcome">
+        <div class="role" id="roleLabel"></div>
+        <h2 id="welcomeName"></h2>
+        <div class="sub">كلية العلوم — جامعة المنصورة · مكتب الدراسات العليا</div>
+        <button class="logout" id="logoutBtn" type="button">تسجيل الخروج</button>
+      </div>
+
+      <div class="lock-card">
+        <div>
+          <div class="lock-status" id="lockStatus">...جاري التحقق</div>
+          <div class="lock-sub">حالة الموقع العام للطلاب الآن</div>
+        </div>
+        <button class="btn-toggle" id="toggleBtn" type="button" disabled>...</button>
+      </div>
+
+      <div class="section-title"><span>إحصائيات التسجيل (مؤشرات الجودة)</span><span class="l"></span></div>
+      <div id="statsArea" class="loading">جاري تحميل الإحصائيات...</div>
+
+      <div class="refresh-note">
+        <span id="lastUpdated"></span> — <a href="#" class="muted-link" id="refreshLink">تحديث الآن</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwqdPUWXDSGFxoB1-U911NjvrP57gjQ3QsxUeLHtZqgmqryn3cOo-BX-klhj2zeipYHAg/exec';
+
+var ADMIN_USERS = {
+  'Amr#Dean2026':  { role: 'وكيل الكلية للدراسات العليا والبحوث', name: 'أ. د. عمرو عوض إبراهيم',
+    welcome: 'أهلًا بحضرتك أستاذ دكتور عمرو عوض، وكيل الكلية لشؤون الدراسات العليا بكلية العلوم جامعة المنصورة' },
+  'Dalia$PG2026':  { role: 'مدير إدارة الدراسات العليا', name: 'د. داليا شادي',
+    welcome: 'أهلًا بحضرتك دكتورة داليا شادي، مدير إدارة الدراسات العليا' },
+  'PGStaff!2026':  { role: 'موظفو إدارة الدراسات العليا', name: 'فريق إدارة الدراسات العليا',
+    welcome: 'أهلًا بفريق إدارة الدراسات العليا' }
+};
+
+var PROGRAM_LABELS = { 'الماجستير':'الماجستير', 'الدكتوراه':'الدكتوراه', 'الشهادات':'الشهادات', 'الوافدين':'الوافدين (طلبات عامة)' };
+
+function jsonp(action, params, cb){
+  var cbName = '__cb_' + action + '_' + Date.now();
+  window[cbName] = function(data){
+    cb(data);
+    delete window[cbName];
+    script.remove();
+  };
+  var qs = 'action=' + encodeURIComponent(action) + '&callback=' + cbName;
+  Object.keys(params || {}).forEach(function(k){ qs += '&' + k + '=' + encodeURIComponent(params[k]); });
+  var script = document.createElement('script');
+  script.src = SHEETS_URL + '?' + qs;
+  script.onerror = function(){ cb(null); delete window[cbName]; };
+  document.body.appendChild(script);
+}
+
+/* ---- Login ---- */
+function doLogin(){
+  var val = document.getElementById('pwInput').value.trim();
+  var user = ADMIN_USERS[val];
+  var errBox = document.getElementById('loginErr');
+  if (!user){
+    errBox.textContent = 'كلمة المرور غير صحيحة';
+    return;
+  }
+  errBox.textContent = '';
+  sessionStorage.setItem('adminPw', val);
+  showDash(user);
+}
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('pwInput').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+
+document.getElementById('logoutBtn').addEventListener('click', function(){
+  sessionStorage.removeItem('adminPw');
+  document.getElementById('dashView').classList.remove('show');
+  document.getElementById('loginView').style.display = '';
+  document.getElementById('pwInput').value = '';
+});
+
+function showDash(user){
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('dashView').classList.add('show');
+  document.getElementById('roleLabel').textContent = user.role;
+  document.getElementById('welcomeName').textContent = user.welcome;
+  refreshLock();
+  refreshStats();
+}
+
+/* ---- Lock toggle ---- */
+var currentLocked = null;
+function refreshLock(){
+  jsonp('getLock', {}, function(data){
+    if (!data){ document.getElementById('lockStatus').textContent = 'تعذر الاتصال بالخادم'; return; }
+    currentLocked = !!data.locked;
+    renderLock();
+  });
+}
+function renderLock(){
+  var statusEl = document.getElementById('lockStatus');
+  var btn = document.getElementById('toggleBtn');
+  btn.disabled = false;
+  if (currentLocked){
+    statusEl.textContent = 'الموقع مغلق حاليًا أمام الطلاب';
+    statusEl.className = 'lock-status closed';
+    btn.textContent = 'فتح الموقع';
+    btn.className = 'btn-toggle to-open';
+  } else {
+    statusEl.textContent = 'الموقع مفتوح ويستقبل التسجيل';
+    statusEl.className = 'lock-status open';
+    btn.textContent = 'قفل الموقع';
+    btn.className = 'btn-toggle to-close';
+  }
+}
+document.getElementById('toggleBtn').addEventListener('click', function(){
+  var btn = this;
+  btn.disabled = true;
+  var newVal = !currentLocked;
+  var body = new URLSearchParams();
+  body.set('action', 'setLock');
+  body.set('locked', newVal ? 'true' : 'false');
+  body.set('password', sessionStorage.getItem('adminPw') || '');
+  fetch(SHEETS_URL, { method:'POST', mode:'no-cors', body: body })
+    .then(function(){ setTimeout(function(){ currentLocked = newVal; renderLock(); refreshLock(); }, 600); })
+    .catch(function(){ btn.disabled = false; });
+});
+
+/* ---- Stats ---- */
+function refreshStats(){
+  var area = document.getElementById('statsArea');
+  area.className = 'loading';
+  area.textContent = 'جاري تحميل الإحصائيات...';
+  jsonp('getStats', {}, function(data){
+    if (!data){ area.textContent = 'تعذر تحميل الإحصائيات'; return; }
+    renderStats(data);
+    document.getElementById('lastUpdated').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
+  });
+}
+function renderStats(data){
+  var area = document.getElementById('statsArea');
+  area.className = '';
+  var html = '<div class="stat-grid">';
+  html += '<div class="stat-card"><div class="num">' + data.total + '</div><div class="lbl">إجمالي المسجلين</div></div>';
+  html += '<div class="stat-card"><div class="num">' + data.totalLocal + '</div><div class="lbl">مصريون</div></div>';
+  html += '<div class="stat-card"><div class="num">' + data.totalIncoming + '</div><div class="lbl">وافدون</div></div>';
+  var pct = data.total > 0 ? Math.round((data.totalIncoming / data.total) * 100) : 0;
+  html += '<div class="stat-card"><div class="num">' + pct + '%</div><div class="lbl">نسبة الوافدين</div></div>';
+  html += '</div>';
+
+  html += '<table class="breakdown"><tr><th>البرنامج</th><th>الإجمالي</th><th>مصريون</th><th>وافدون</th></tr>';
+  Object.keys(data.programs || {}).forEach(function(key){
+    var p = data.programs[key];
+    html += '<tr><td>' + (PROGRAM_LABELS[key] || key) + '</td><td>' + p.total + '</td><td>' + p.local + '</td><td>' + p.incoming + '</td></tr>';
+  });
+  html += '</table>';
+  area.innerHTML = html;
+}
+
+document.getElementById('refreshLink').addEventListener('click', function(e){
+  e.preventDefault();
+  refreshLock();
+  refreshStats();
+});
+
+/* ---- Restore session ---- */
+(function(){
+  var saved = sessionStorage.getItem('adminPw');
+  if (saved && ADMIN_USERS[saved]) showDash(ADMIN_USERS[saved]);
+})();
+</script>
+</body>
+</html>
