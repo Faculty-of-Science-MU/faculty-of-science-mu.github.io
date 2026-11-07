@@ -348,6 +348,16 @@
     <div class="corner bl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 2h14M2 2v14"/><path d="M2 8c6 0 8 2 8 8"/></svg></div>
     <div class="corner br"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 2h14M2 2v14"/><path d="M2 8c6 0 8 2 8 8"/></svg></div>
 
+    <div id="maintenanceScreen" style="text-align:center; padding:70px 20px 50px;">
+      <svg width="56" height="56" viewBox="0 0 36 36" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 18px; display:block;"><circle cx="18" cy="18" r="13"/><path d="M18 10v8l5 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h2 style="font-family:'Amiri', Georgia, serif; color:var(--emerald); margin:0 0 14px; font-size:1.4rem;">الموقع متوقف مؤقتًا</h2>
+      <p style="color:var(--text-muted); font-size:1rem; line-height:2; max-width:520px; margin:0 auto;">
+        الموقع غير متاح الآن، وسيُفتح مرة أخرى في المواعيد الرسمية للعمل.<br>
+        نعتذر عن أي إزعاج، ونشكر تفهمكم.
+      </p>
+    </div>
+
+    <div id="siteContent" hidden>
     <!-- HERO -->
     <section class="hero">
       <div class="hero-logos">
@@ -428,6 +438,7 @@
         <button type="button" class="btn-ghost" id="downloadQrBtn">تنزيل QR</button>
       </div>
     </section>
+    </div><!-- /siteContent -->
 
     <div class="divider" aria-hidden="true">
       <span class="l1"></span>
@@ -2762,6 +2773,7 @@ function supervisorFields(n, required){
 }
 
 function committeeFormDef(isDoctorate){
+  var degreeLabel = isDoctorate ? 'الدكتوراه' : 'الماجستير';
   var links = isDoctorate ? {
     jury: 'https://tinyurl.com/j3km6e7k',
     validity: 'https://tinyurl.com/4zr3xkz3'
@@ -2789,7 +2801,8 @@ function committeeFormDef(isDoctorate){
       { label:'نموذج عدد مرات التحكيم', href: COMMITTEE_FORM_URL },
       { label:'نموذج تقرير الصلاحية', href: links.validity }
     ],
-    contact: { name:'c_student_name', phone:'c_phone', email:'c_email' }
+    contact: { name:'c_student_name', phone:'c_phone', email:'c_email' },
+    sheetLabel: degreeLabel
   };
 }
 
@@ -2855,7 +2868,8 @@ function registrationFormDef(isDoctorate){
       { label:'الخطة الزمنية / الدراسية', href: regLinks.plan },
       { label:'درجة قرابة الإشراف', href: KINSHIP_FORM_URL }
     ],
-    contact: { name:'r_name', phone:'r_phone', email:'r_email' }
+    contact: { name:'r_name', phone:'r_phone', email:'r_email' },
+    sheetLabel: degreeLabel
   };
 }
 
@@ -3141,8 +3155,10 @@ function handleSubmit(heading, def){
   var now = new Date();
   var dateStr = now.toLocaleDateString('ar-EG') + ' ' + now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
   var program = programById(state.programId);
+  var sheetProgram = def.sheetLabel || program.label;
 
   var rows = [['البرنامج', heading], ['التاريخ', dateStr]];
+  if (sheetProgram !== program.label) rows.push(['الفئة', program.label]);
   fields.forEach(function(f){
     if (values[f.key]) rows.push([f.label, values[f.key]]);
   });
@@ -3157,7 +3173,7 @@ function handleSubmit(heading, def){
     contactEmail: def.contact ? values[def.contact.email] : ''
   };
 
-  submitToSheet(program.label, rows);
+  submitToSheet(sheetProgram, rows);
   renderReceipt(rows);
   showView('confirm');
 }
