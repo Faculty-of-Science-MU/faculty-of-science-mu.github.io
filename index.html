@@ -2745,6 +2745,24 @@ var CONFIG = {
   sheetsWebAppUrl: 'https://script.google.com/macros/s/AKfycbwqdPUWXDSGFxoB1-U911NjvrP57gjQ3QsxUeLHtZqgmqryn3cOo-BX-klhj2zeipYHAg/exec'
 };
 
+// GET-only, read-only calls to the Apps Script backend via a dynamically
+// injected <script> tag (JSONP) -- the only way to read a response back
+// from it reliably; see submitToSheet's no-cors POST for why writes don't.
+function jsonp(action, params, cb){
+  var cbName = '__jp_' + action + '_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+  window[cbName] = function(data){
+    cb(data);
+    delete window[cbName];
+    s.remove();
+  };
+  var qs = 'action=' + encodeURIComponent(action) + '&callback=' + cbName;
+  Object.keys(params || {}).forEach(function(k){ qs += '&' + k + '=' + encodeURIComponent(params[k]); });
+  var s = document.createElement('script');
+  s.src = CONFIG.sheetsWebAppUrl + '?' + qs;
+  s.onerror = function(){ cb(null); delete window[cbName]; };
+  document.body.appendChild(s);
+}
+
 /* ---- Official document links (hosted on Google Drive) ---- */
 var KINSHIP_FORM_URL = 'https://docs.google.com/document/d/1U3kNrcJ-iftpI-ZrlzEUfcxC1zBx4yIq/view';
 var COMMITTEE_FORM_URL = 'https://docs.google.com/document/d/1tG2uFgDyc7UxadsTrl4resJtl_XjACRV/view';
@@ -2824,7 +2842,9 @@ function committeeFormDef(isDoctorate){
       { label:'نموذج تقرير الصلاحية', href: links.validity }
     ],
     contact: { name:'c_student_name', phone:'c_phone', email:'c_email' },
-    sheetLabel: degreeLabel
+    sheetLabel: degreeLabel,
+    idField: 'c_nid',
+    submitType: 'committee'
   };
 }
 
@@ -2862,36 +2882,40 @@ function registrationFormDef(isDoctorate){
       { title:'البيانات الأساسية', fields: [
         { key:'r_name',  label:'الاسم (مطابق لبطاقة الرقم القومي)', type:'text', required:true },
         { key:'r_spec',  label:'التخصص / التخصص الدقيق', type:'text', required:true },
+        { key:'r_job',   label:'الوظيفة', type:'text', required:true },
         { key:'r_nid',   label:'الرقم القومي / جواز السفر للوافدين', type:'text', required:true },
         { key:'r_nat',   label:'الجنسية', type:'text', required:true },
         { key:'r_dob',   label:'تاريخ الميلاد', type:'date', required:true },
         { key:'r_pob',   label:'جهة الميلاد (مطابق لشهادة الميلاد)', type:'text', required:true },
         { key:'r_addr',  label:'العنوان (مطابق لبطاقة الرقم القومي)', type:'text', required:true },
         { key:'r_phone', label:'رقم الهاتف / واتساب', type:'text', required:true },
-        { key:'r_email', label:'البريد الإلكتروني', type:'email', required:true },
-        { key:'r_job',   label:'الوظيفة', type:'text', required:true }
+        { key:'r_email', label:'البريد الإلكتروني', type:'email', required:true }
       ]},
       { title:'المؤهلات الدراسية (كما هو مدون في شهادة التخرج)', fields: qualFields },
       { title:'عنوان الرسالة', fields: [
         { key:'thesis_ar', label:'عنوان الرسالة باللغة العربية (مطابقًا لعنوان فحص التشابه)', type:'text', required:true },
         { key:'thesis_en', label:'عنوان الرسالة باللغة الأجنبية (مطابقًا لعنوان فحص التشابه)', type:'text', required:true }
       ]},
-      { title:'الخطة المقترحة والجدول الزمني لمراحل إجراء البحث', fields: [
+      { title:'لجنة الإشراف (بناءً على تعليمات المشرف الرئيسي)', fields: supervisors },
+      { title:'المدة الزمنية لمراحل إجراء البحث', fields: [
         { key:'plan_collect',    label:'المدة الزمنية لجمع المادة العلمية', type:'text', required:true },
         { key:'plan_steps',      label:'المدة الزمنية لخطوات إجراء البحث', type:'text', required:true },
         { key:'plan_results',    label:'المدة الزمنية لجمع النتائج وتحليلها', type:'text', required:true },
-        { key:'plan_writing',    label:'المدة الزمنية للكتابة والنشر', type:'text', required:true },
+        { key:'plan_writing',    label:'المدة الزمنية للكتابة والنشر', type:'text', required:true }
+      ]},
+      { title:'الإمكانيات والتطبيق العملي', fields: [
         { key:'plan_resources',  label:'الإمكانيات المطلوبة ومدى توافرها', type:'textarea', required:true },
         { key:'plan_feasibility',label:'مدى إمكانية التطبيق العملي للدراسة المقترحة', type:'textarea', required:true }
-      ]},
-      { title:'لجنة الإشراف (بناءً على تعليمات المشرف الرئيسي)', fields: supervisors }
+      ]}
     ],
     downloadLinks: [
       { label:'الخطة الزمنية / الدراسية', href: regLinks.plan },
       { label:'درجة قرابة الإشراف', href: KINSHIP_FORM_URL }
     ],
     contact: { name:'r_name', phone:'r_phone', email:'r_email' },
-    sheetLabel: degreeLabel
+    sheetLabel: degreeLabel,
+    idField: 'r_nid',
+    submitType: 'register'
   };
 }
 
@@ -2928,7 +2952,9 @@ var CERT_FORM_DEF = {
       { key:'count_en', label:'عدد الشهادات باللغة الإنجليزية', type:'text', required:false }
     ]}
   ],
-  contact: { name:'name_ar', phone:'phone', email:'email' }
+  contact: { name:'name_ar', phone:'phone', email:'email' },
+  idField: 'nid',
+  submitType: 'certificate'
 };
 
 var INCOMING_DEF = {
@@ -3060,7 +3086,7 @@ function programById(id){
 
 /* ---- Flow state: a navigation stack lets "back" step through nested
    branches (e.g. الوافدين → الدكتوراه → القيد والتسجيل) one level at a time. ---- */
-var state = { programId:null, formDef:null, stack:[] };
+var state = { programId:null, formDef:null, stack:[], editToken:null };
 
 function selectProgram(id){
   var program = programById(id);
@@ -3116,20 +3142,37 @@ function renderBranchPicker(heading, branch){
 }
 
 function renderFormFields(heading, def){
-  document.getElementById('formHeading').textContent = 'بيانات المتقدم';
+  document.getElementById('formHeading').textContent = state.editToken ? 'تعديل البيانات المُرسلة' : 'بيانات المتقدم';
   var linksHtml = renderDownloadLinks(def.downloadLinks);
+  var btnLabel = state.editToken ? 'حفظ التعديل' : 'تسجيل الطلب';
   var html =
     '<form id="dynForm" novalidate>' +
       renderSections(def.sections) +
       linksHtml +
       '<p class="err" id="dynErr"></p>' +
-      '<div class="actions"><button type="submit" class="btn-gold">تسجيل الطلب</button></div>' +
+      '<div class="actions"><button type="submit" class="btn-gold" id="submitBtn">'+btnLabel+'</button></div>' +
     '</form>';
   var area = document.getElementById('dynamicFormArea');
   area.innerHTML = html;
   document.getElementById('dynForm').addEventListener('submit', function(ev){
     ev.preventDefault();
     handleSubmit(heading, def);
+  });
+}
+
+function populateFields(def, rowPairs){
+  var byLabel = {};
+  rowPairs.forEach(function(pair){ byLabel[pair[0]] = pair[1]; });
+  allFieldsOf(def.sections).forEach(function(f){
+    var val = byLabel[f.label];
+    if (val === undefined || val === '') return;
+    if (f.type === 'radio') {
+      var radios = document.getElementsByName('df_' + f.key);
+      Array.prototype.forEach.call(radios, function(r){ r.checked = (r.value === val); });
+    } else {
+      var el = document.getElementById('df_' + f.key);
+      if (el) el.value = val;
+    }
   });
 }
 
@@ -3161,6 +3204,20 @@ function submitToSheet(program, rows){
   } catch (err) { /* ignore */ }
 }
 
+// Same idea, but tells the backend to overwrite the student's existing row
+// (found by their private edit token) instead of appending a new one.
+function submitEdit(token, program, rows){
+  if (!CONFIG.sheetsWebAppUrl) return;
+  try {
+    var body = new URLSearchParams();
+    body.set('action', 'updateByToken');
+    body.set('token', token);
+    body.set('program', program);
+    body.set('fields', JSON.stringify(rows));
+    fetch(CONFIG.sheetsWebAppUrl, { method:'POST', mode:'no-cors', body: body }).catch(function(){});
+  } catch (err) { /* ignore */ }
+}
+
 function handleSubmit(heading, def){
   var fields = allFieldsOf(def.sections);
   var values = collectValues(fields);
@@ -3174,30 +3231,56 @@ function handleSubmit(heading, def){
   }
   errBox.textContent = '';
 
-  var now = new Date();
-  var dateStr = now.toLocaleDateString('ar-EG') + ' ' + now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
   var program = programById(state.programId);
   var sheetProgram = def.sheetLabel || program.label;
+  var submitBtn = document.getElementById('submitBtn');
 
-  var rows = [['البرنامج', heading], ['التاريخ', dateStr]];
-  if (sheetProgram !== program.label) rows.push(['الفئة', program.label]);
-  fields.forEach(function(f){
-    if (values[f.key]) rows.push([f.label, values[f.key]]);
+  function proceed(){
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('ar-EG') + ' ' + now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+    var rows = [['البرنامج', heading], ['التاريخ', dateStr]];
+    if (sheetProgram !== program.label) rows.push(['الفئة', program.label]);
+    fields.forEach(function(f){
+      if (values[f.key]) rows.push([f.label, values[f.key]]);
+    });
+
+    lastSubmission = {
+      program: program.label,
+      heading: heading,
+      date: dateStr,
+      rows: rows,
+      contactName: def.contact ? values[def.contact.name] : '',
+      contactPhone: def.contact ? values[def.contact.phone] : '',
+      contactEmail: def.contact ? values[def.contact.email] : ''
+    };
+
+    if (state.editToken) {
+      submitEdit(state.editToken, sheetProgram, rows);
+    } else {
+      submitToSheet(sheetProgram, rows);
+    }
+    renderReceipt(rows);
+    showView('confirm');
+  }
+
+  // Editing an already-submitted record skips the duplicate check -- it's
+  // an update to the same row, not a brand-new submission.
+  if (state.editToken || !def.idField) { proceed(); return; }
+
+  var nid = values[def.idField];
+  if (!nid) { proceed(); return; }
+
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'جاري التحقق...'; }
+  jsonp('checkDuplicate', { program: sheetProgram, nid: nid, heading: heading }, function(data){
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'تسجيل الطلب'; }
+    if (data && data.exists) {
+      errBox.textContent = 'هذه البيانات مسجّلة لدينا بالفعل وسبق إرسالها. لتعديل بياناتك افتحي البريد الإلكتروني الذي وصلك عند التسجيل الأول واضغطي على رابط "تعديل البيانات" الموجود فيه.';
+      var idEl = document.getElementById('df_' + def.idField);
+      if (idEl && idEl.scrollIntoView) idEl.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+    proceed();
   });
-
-  lastSubmission = {
-    program: program.label,
-    heading: heading,
-    date: dateStr,
-    rows: rows,
-    contactName: def.contact ? values[def.contact.name] : '',
-    contactPhone: def.contact ? values[def.contact.phone] : '',
-    contactEmail: def.contact ? values[def.contact.email] : ''
-  };
-
-  submitToSheet(sheetProgram, rows);
-  renderReceipt(rows);
-  showView('confirm');
 }
 
 function renderReceipt(rows){
@@ -3331,4 +3414,39 @@ document.getElementById('downloadQrBtn').addEventListener('click', async functio
     copyText(pageUrl, 'تعذّر الحفظ — تم نسخ الرابط بدلاً من ذلك');
   }
 });
+
+// ---- Edit-link bootstrap: a student following the "تعديل البيانات" link
+// from their confirmation email lands here with ?edit=TOKEN&program=...
+// &type=... in the URL. We rebuild the exact same form they originally
+// filled (no need to re-walk the picker), then pre-fill it with their
+// stored answers fetched by token, and route the eventual submit through
+// submitEdit() (see handleSubmit) so it overwrites their row in place.
+(function(){
+  var qs = new URLSearchParams(location.search);
+  var token = qs.get('edit');
+  if (!token) return;
+
+  var editProgramKey = qs.get('program') || '';
+  var editType = qs.get('type') || '';
+  var isDoctorate = editProgramKey === 'الدكتوراه';
+
+  var def;
+  if (editType === 'committee') def = committeeFormDef(isDoctorate);
+  else if (editType === 'register') def = registrationFormDef(isDoctorate);
+  else def = CERT_FORM_DEF;
+
+  jsonp('fetchForEdit', { token: token, program: editProgramKey }, function(data){
+    if (!data || !data.found) {
+      showToast('تعذّر العثور على بياناتك — تأكدي من الرابط');
+      return;
+    }
+    var idByLabel = { 'الماجستير':'master', 'الدكتوراه':'doctorate', 'الشهادات':'certificate', 'الوافدين':'incoming' };
+    state.editToken = token;
+    state.programId = idByLabel[editProgramKey] || 'certificate';
+    document.getElementById('chosenLabel').textContent = editProgramKey;
+    enterStep(data.heading || editProgramKey, def);
+    showView('form');
+    populateFields(def, data.fields || []);
+  });
+})();
 </script>
