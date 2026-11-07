@@ -2771,14 +2771,16 @@ var ICONS = {
   master: '<path d="M18 6L32 12 18 18 4 12z"/><path d="M9 14.5V21c0 2 4 4 9 4s9-2 9-4v-6.5" /><path d="M32 12v7" stroke-linecap="round"/><circle cx="32" cy="21" r="1.5" fill="currentColor" stroke="none"/>',
   doctorate: '<circle cx="18" cy="18" r="6"/><path d="M18 12l1.6 3.4L23 16l-2.6 2.6.6 3.6-3-1.7-3 1.7.6-3.6L13 16l3.4-.6z"/><path d="M7 22c2.5 5 4.5 6.8 7 7.6M29 22c-2.5 5-4.5 6.8-7 7.6" stroke-linecap="round"/>',
   certificate: '<rect x="6" y="5" width="20" height="16" rx="1.5"/><path d="M10 10h12M10 14h9" stroke-linecap="round"/><circle cx="24" cy="24" r="5"/><path d="M21.5 28l-2 5 4.5-2 4.5 2-2-5" stroke-linejoin="round"/>',
-  incoming: '<circle cx="18" cy="18" r="13"/><path d="M5 18h26M18 5c4 3.5 6 8 6 13s-2 9.5-6 13c-4-3.5-6-8-6-13s2-9.5 6-13z"/>'
+  incoming: '<circle cx="18" cy="18" r="13"/><path d="M5 18h26M18 5c4 3.5 6 8 6 13s-2 9.5-6 13c-4-3.5-6-8-6-13s2-9.5 6-13z"/>',
+  generalCert: '<rect x="7" y="4" width="18" height="24" rx="1.5"/><path d="M11 10h10M11 14h10M11 18h6" stroke-linecap="round"/><circle cx="23" cy="24" r="6"/><path d="M20.5 24l1.6 1.8L26 22" stroke-linecap="round" stroke-linejoin="round"/>'
 };
 
 var PROGRAMS = [
-  { id:'master',      label:'الماجستير',  sub:'Master', icon:ICONS.master },
-  { id:'doctorate',   label:'الدكتوراه',  sub:'PhD', icon:ICONS.doctorate },
-  { id:'certificate', label:'الشهادات',   sub:'Certificates', icon:ICONS.certificate },
-  { id:'incoming',    label:'الوافدين',   sub:'International', icon:ICONS.incoming }
+  { id:'master',       label:'الماجستير',       sub:'Master', icon:ICONS.master },
+  { id:'doctorate',    label:'الدكتوراه',       sub:'PhD', icon:ICONS.doctorate },
+  { id:'certificate',  label:'الشهادات',        sub:'Certificates', icon:ICONS.certificate },
+  { id:'incoming',     label:'الوافدين',        sub:'International', icon:ICONS.incoming },
+  { id:'generalCert',  label:'الإفادات العامة', sub:'Certifications', icon:ICONS.generalCert }
 ];
 
 /* ==================================================================
@@ -2957,6 +2959,45 @@ var CERT_FORM_DEF = {
   submitType: 'certificate'
 };
 
+var GENERAL_CERT_TYPES = [
+  'تسجيل دكتوراه',
+  'حصول على تمهيدي ماجستير',
+  'إفادة مقررات دكتوراه',
+  'إفادة قيد تمهيدي',
+  'إفادة قيد دبلوم'
+];
+
+var GENERAL_CERT_DEF = {
+  banner: 'عند طلب نسخة إنجليزية من الإفادة، يجب إرفاق صورة جواز السفر عبر البريد الإلكتروني لمكتب الدراسات العليا بعد التسجيل، وإلا تكون مطابقة الاسم المكتوب مسؤولية الطالب بالكامل. بخصوص إفادات الجوازات، يُرجى التوجه مباشرة إلى مكتب الدراسات العليا.',
+  sections: [
+    { fields: [
+      { key:'gc_type',  label:'نوع الإفادة المطلوبة', type:'select', options: GENERAL_CERT_TYPES, required:true },
+      { key:'gc_auth',  label:'نوع التصديق', type:'radio', options:['مؤمنة','غير مؤمنة'], required:true },
+      { key:'gc_lang',  label:'اللغة المطلوبة', type:'radio', options:['عربي','إنجليزي','عربي وإنجليزي'], required:true },
+      { key:'gc_name_ar', label:'الاسم باللغة العربية (مطابق لبطاقة الرقم القومي)', type:'text', required:true },
+      { key:'gc_name_en', label:'الاسم باللغة الإنجليزية (كما في جواز السفر، عند طلب نسخة إنجليزية)', type:'text', required:false },
+      { key:'gc_nid',   label:'الرقم القومي', type:'text', required:true },
+      { key:'gc_pob',   label:'جهة الميلاد', type:'text', required:true },
+      { key:'gc_dob',   label:'تاريخ الميلاد', type:'date', required:true },
+      { key:'gc_count_ar', label:'عدد النسخ المطلوبة (عربي)', type:'text', required:false },
+      { key:'gc_count_en', label:'عدد النسخ المطلوبة (إنجليزي)', type:'text', required:false },
+      { key:'gc_phone', label:'رقم الهاتف / واتساب', type:'text', required:true },
+      { key:'gc_email', label:'البريد الإلكتروني', type:'email', required:true }
+    ]}
+  ],
+  contact: { name:'gc_name_ar', phone:'gc_phone', email:'gc_email' },
+  idField: 'gc_nid',
+  submitType: 'general_cert',
+  sheetLabel: 'الإفادات العامة',
+  dynamicHeadingField: 'gc_type',
+  customValidate: function(values){
+    if (values.gc_type === 'إفادة قيد دبلوم' && values.gc_auth === 'مؤمنة') {
+      return 'إفادة قيد الدبلوم متاحة بنسخة غير مؤمنة فقط، برجاء تعديل الاختيار.';
+    }
+    return null;
+  }
+};
+
 var INCOMING_DEF = {
   branch: {
     question: 'اختر نوع الطلب',
@@ -2971,7 +3012,8 @@ var PROGRAM_DEFS = {
   master: degreeBranchDef(false),
   doctorate: degreeBranchDef(true),
   certificate: CERT_FORM_DEF,
-  incoming: INCOMING_DEF
+  incoming: INCOMING_DEF,
+  generalCert: GENERAL_CERT_DEF
 };
 
 /* ---- Field rendering ---- */
@@ -3143,10 +3185,12 @@ function renderBranchPicker(heading, branch){
 
 function renderFormFields(heading, def){
   document.getElementById('formHeading').textContent = state.editToken ? 'تعديل البيانات المُرسلة' : 'بيانات المتقدم';
+  var bannerHtml = def.banner ? '<div class="alert-banner">'+def.banner+'</div>' : '';
   var linksHtml = renderDownloadLinks(def.downloadLinks);
   var btnLabel = state.editToken ? 'حفظ التعديل' : 'تسجيل الطلب';
   var html =
     '<form id="dynForm" novalidate>' +
+      bannerHtml +
       renderSections(def.sections) +
       linksHtml +
       '<p class="err" id="dynErr"></p>' +
@@ -3231,14 +3275,26 @@ function handleSubmit(heading, def){
   }
   errBox.textContent = '';
 
+  if (def.customValidate) {
+    var customErr = def.customValidate(values);
+    if (customErr) { errBox.textContent = customErr; return; }
+  }
+
   var program = programById(state.programId);
   var sheetProgram = def.sheetLabel || program.label;
   var submitBtn = document.getElementById('submitBtn');
+  // Some forms (e.g. "الإفادات العامة") cover several distinct request types
+  // through one flat form; dynamicHeadingField names the field whose answer
+  // should be appended to the heading so each type gets its own duplicate
+  // bucket instead of being lumped together under one generic heading.
+  var effectiveHeading = def.dynamicHeadingField && values[def.dynamicHeadingField]
+    ? heading + ' — ' + values[def.dynamicHeadingField]
+    : heading;
 
   function proceed(){
     var now = new Date();
     var dateStr = now.toLocaleDateString('ar-EG') + ' ' + now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-    var rows = [['البرنامج', heading], ['التاريخ', dateStr]];
+    var rows = [['البرنامج', effectiveHeading], ['التاريخ', dateStr]];
     if (sheetProgram !== program.label) rows.push(['الفئة', program.label]);
     fields.forEach(function(f){
       if (values[f.key]) rows.push([f.label, values[f.key]]);
@@ -3246,7 +3302,7 @@ function handleSubmit(heading, def){
 
     lastSubmission = {
       program: program.label,
-      heading: heading,
+      heading: effectiveHeading,
       date: dateStr,
       rows: rows,
       contactName: def.contact ? values[def.contact.name] : '',
@@ -3271,7 +3327,7 @@ function handleSubmit(heading, def){
   if (!nid) { proceed(); return; }
 
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'جاري التحقق...'; }
-  jsonp('checkDuplicate', { program: sheetProgram, nid: nid, heading: heading }, function(data){
+  jsonp('checkDuplicate', { program: sheetProgram, nid: nid, heading: effectiveHeading }, function(data){
     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'تسجيل الطلب'; }
     if (data && data.exists) {
       errBox.textContent = 'هذه البيانات مسجّلة لدينا بالفعل وسبق إرسالها. لتعديل بياناتك افتحي البريد الإلكتروني الذي وصلك عند التسجيل الأول واضغطي على رابط "تعديل البيانات" الموجود فيه.';
