@@ -453,6 +453,12 @@
       s.src = 'https://script.google.com/macros/s/AKfycbwqdPUWXDSGFxoB1-U911NjvrP57gjQ3QsxUeLHtZqgmqryn3cOo-BX-klhj2zeipYHAg/exec?action=getLock&callback=' + cbName;
       s.onerror = function(){ delete window[cbName]; };
       document.body.appendChild(s);
+
+      try {
+        var vbody = new URLSearchParams();
+        vbody.set('action', 'logVisit');
+        fetch('https://script.google.com/macros/s/AKfycbwqdPUWXDSGFxoB1-U911NjvrP57gjQ3QsxUeLHtZqgmqryn3cOo-BX-klhj2zeipYHAg/exec', { method:'POST', mode:'no-cors', body: vbody }).catch(function(){});
+      } catch (err) { /* ignore */ }
     })();
     </script>
 

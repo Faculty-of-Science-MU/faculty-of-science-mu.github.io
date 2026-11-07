@@ -412,6 +412,9 @@ function renderStats(data){
   html += '<div class="stat-card"><div class="num">' + data.totalLocal + '</div><div class="lbl">مصريون</div></div>';
   html += '<div class="stat-card"><div class="num">' + data.totalIncoming + '</div><div class="lbl">وافدون</div></div>';
   html += '<div class="stat-card"><div class="num">' + (data.activePrograms||0) + ' / 4</div><div class="lbl">برامج تستقبل تسجيلًا</div></div>';
+  html += '<div class="stat-card"><div class="num">' + (data.totalRegistration||0) + '</div><div class="lbl">قيد وتسجيل</div></div>';
+  html += '<div class="stat-card"><div class="num">' + (data.totalCommittee||0) + '</div><div class="lbl">تشكيل لجان</div></div>';
+  html += '<div class="stat-card"><div class="num">' + (data.totalVisits||0) + '</div><div class="lbl">مشاهدات الموقع (من الآن)</div></div>';
   html += '</div>';
 
   var insights = buildInsights(data);
@@ -426,6 +429,15 @@ function renderStats(data){
   Object.keys(data.programs || {}).forEach(function(key){
     var p = data.programs[key];
     html += '<tr><td>' + (PROGRAM_LABELS[key] || key) + '</td><td>' + p.total + '</td><td>' + p.local + '</td><td>' + p.incoming + '</td></tr>';
+  });
+  html += '</table>';
+
+  html += '<table class="breakdown" style="margin-top:22px;"><tr><th>البرنامج</th><th>قيد وتسجيل</th><th>تشكيل</th><th>مصريون (تسجيل)</th><th>مصريون (تشكيل)</th><th>وافدون (تسجيل)</th><th>وافدون (تشكيل)</th></tr>';
+  Object.keys(data.programs || {}).forEach(function(key){
+    var p = data.programs[key];
+    html += '<tr><td>' + (PROGRAM_LABELS[key] || key) + '</td><td>' + (p.registration||0) + '</td><td>' + (p.committee||0) + '</td>' +
+      '<td>' + (p.localRegistration||0) + '</td><td>' + (p.localCommittee||0) + '</td>' +
+      '<td>' + (p.incomingRegistration||0) + '</td><td>' + (p.incomingCommittee||0) + '</td></tr>';
   });
   html += '</table>';
   area.innerHTML = html;
